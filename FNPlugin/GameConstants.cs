@@ -48,12 +48,12 @@ namespace FNPlugin
         public const double microwave_dish_efficiency = 0.85f;
         public const double microwave_alpha = 0.00399201596806387225548902195609f;
 
-        public const float stefan_const = 5.670373e-8f;  // Stefan-Botzman const for watts / m2
+        public const float stefan_const = 5.670373e-8f;
         public const double warpspeed = 29979245.8;
         public const double rad_const_h = 1000;
         public const double alpha = 0.001998001998001998001998001998;
         public const double atmospheric_non_precooled_limit = 740;
-        public const float initial_alcubierre_megajoules_required = 100;
+        public const double initial_alcubierre_megajoules_required = 1000;
 
         public const double telescopePerformanceTimescale = 2.1964508725630127431022388314009e-8;
         public const double telescopeBaseScience = 0.1666667;
@@ -80,14 +80,11 @@ namespace FNPlugin
 
         public const double dilution_factor = 15000.0;
         public const double LfoFuelThrustModifier = 2.2222;
-        public const float IspCoreTemperatureMultiplier = 22.371670613f;
-        public const float BaseThrustPowerMultiplier = 2000;
-        public const float HighCoreTempThrustMultiplier = 1600;
+        public const double IspCoreTemperatureMultiplier = 22.371670613;
+        public const double BaseThrustPowerMultiplier = 2000;
+        public const double HighCoreTempThrustMultiplier = 1600;
 
         public const float BaseMaxPowerDrawForExoticMatter = 1000f;
         public const float MaxThermalNozzleIsp = 2997.13f;
-
-        public const int defaultSupportedPropellantAtoms = 121;
-        public const int defaultSupportedPropellantTypes = 63;
     }
 }

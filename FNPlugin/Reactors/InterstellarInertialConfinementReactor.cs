@@ -5,10 +5,13 @@ using UnityEngine;
 namespace FNPlugin 
 {
     [KSPModule("IC Fusion Reactor")]
-    class InterstellarInertialConfinementReactor : InterstellarFusionReactor
+    class InterstellarInertialConfinementReactor : InterstellarFusionReactor, IChargedParticleSource
     {
+        [KSPField(isPersistant = false, guiActive = true, guiName = "Maintenance")]
+        public string laserPower;
         [KSPField(isPersistant = true)]
         protected double accumulatedElectricChargeInMW;
+
 
         [KSPField(isPersistant = false, guiActive = true, guiName = "Charge")]
         public string accumulatedChargeStr = String.Empty;
@@ -27,6 +30,9 @@ namespace FNPlugin
 
         public override void OnStart(PartModule.StartState state)
         {
+            Events["SwapNextFuelMode"].active = true;
+            Events["SwapPreviousFuelMode"].active = true;
+
             if (state != StartState.Editor && allowJumpStart)
             {
                 if (startDisabled)
@@ -39,16 +45,16 @@ namespace FNPlugin
             base.OnStart(state);
         }
 
-        //public override string TypeName { get { return (isupgraded ? upgradedName != "" ? upgradedName : originalName : originalName) + " Reactor"; } }
+        public override string TypeName { get { return (isupgraded ? upgradedName != "" ? upgradedName : originalName : originalName) + " Reactor"; } }
 
         public override bool IsNeutronRich { get { return !current_fuel_mode.Aneutronic; } }
 
+	    [KSPField(isPersistant = false, guiActive = true, guiName = "HeatingPowerRequirements")]
 	    public float LaserPowerRequirements
 	    {
-		    get { return current_fuel_mode == null
-                ? PowerRequirement
-                : PowerRequirement * current_fuel_mode.NormalisedPowerRequirements;
-            }
+		    get { return current_fuel_mode == null 
+				? powerRequirements 
+				: (float)(powerRequirements * current_fuel_mode.NormalisedPowerRequirements); }
 	    }
         
         public override bool shouldScaleDownJetISP() 
@@ -66,9 +72,13 @@ namespace FNPlugin
             else 
                 fusion_alert = false;
 
+            Events["SwapNextFuelMode"].active = true;
+            Events["SwapPreviousFuelMode"].active = true;
+
             Fields["accumulatedChargeStr"].guiActive = plasma_ratio < 1;
 
-            electricPowerMaintenance = PluginHelper.getFormattedPowerString(power_consumed) + " / " + PluginHelper.getFormattedPowerString(LaserPowerRequirements);
+
+            laserPower = PluginHelper.getFormattedPowerString(power_consumed) + "/" + PluginHelper.getFormattedPowerString(LaserPowerRequirements);
             base.OnUpdate();
         }
 

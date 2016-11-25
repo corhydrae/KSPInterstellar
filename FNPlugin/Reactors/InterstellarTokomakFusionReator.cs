@@ -6,29 +6,25 @@ namespace FNPlugin
 {
     class InterstellarTokamakFusionReactor : InterstellarFusionReactor
     {
+        [KSPField(isPersistant = false, guiActive = true, guiName = "Maintance")]
+        public string tokomakPower;
+
         public bool fusion_alert = false;
         public float power_consumed = 0.0f;
         public int jumpstartPowerTime = 0;
         public int fusionAlertFrames = 0;
 
+        // properties
+        public override string TypeName { get { return (isupgraded ? upgradedName != "" ? upgradedName : originalName : originalName) + " Reactor"; } }
+
         public float HeatingPowerRequirements 
 		{ 
 			get { 
-				return current_fuel_mode == null
-                    ? PowerRequirement
-                    : PowerRequirement * current_fuel_mode.NormalisedPowerRequirements; 
+				return current_fuel_mode == null 
+					? powerRequirements 
+					: (float)(powerRequirements * current_fuel_mode.NormalisedPowerRequirements); 
 			} 
 		}
-
-        public override float MaximumThermalPower
-        {
-            get
-            {
-                float lithiumModifier = lithiumPartResource != null ? (float)Math.Sqrt(lithiumPartResource.amount / lithiumPartResource.maxAmount) : 1;
-
-                return Math.Max(base.MaximumThermalPower * lithiumModifier, 0.000000001f);
-            }
-        }
 
         public override void OnUpdate() 
         {
@@ -47,7 +43,9 @@ namespace FNPlugin
                 fusion_alert = true;
             }
 
-            electricPowerMaintenance = PluginHelper.getFormattedPowerString(power_consumed) + " / " + PluginHelper.getFormattedPowerString(HeatingPowerRequirements);
+            Events["SwapNextFuelMode"].active = true;
+            Events["SwapPreviousFuelMode"].active = true;
+            tokomakPower = PluginHelper.getFormattedPowerString(power_consumed) + "/" + PluginHelper.getFormattedPowerString(HeatingPowerRequirements);
         }
 
         private float GetPlasmaRatio(float consumedPower)
@@ -107,6 +105,9 @@ namespace FNPlugin
 
         public override void OnStart(PartModule.StartState state)
         {
+            Events["SwapNextFuelMode"].active = true;
+            Events["SwapPreviousFuelMode"].active = true;
+
             if (state != StartState.Editor)
             {
                 if (allowJumpStart)

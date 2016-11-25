@@ -1,5 +1,4 @@
 using System;
-using FNPlugin.Propulsion;
 
 namespace FNPlugin
 {
@@ -19,25 +18,6 @@ namespace FNPlugin
 
     public interface IThermalSource : IThermalReciever
     {
-        Part Part { get; }
-
-
-        /// <summary>
-        /// // The absolute maximum amount of power the thermalsource can possbly produce
-        /// </summary>
-        float RawMaximumPower { get; }
-
-        /// <summary>
-        /// Influences the Mass in Electric Generator
-        /// </summary>
-        float ThermalProcessingModifier { get; }
-
-        int SupportedPropellantAtoms { get; }
-
-        int SupportedPropellantTypes { get; }
-
-        bool FullPowerForNonNeutronAbsorbants { get; }
-
         double ProducedWasteHeat { get; }
 
         float PowerBufferBonus { get; }
@@ -93,8 +73,6 @@ namespace FNPlugin
         void NotifyActiveChargedEnergyGenrator(double efficency, ElectricGeneratorType generatorType);
 
         bool ShouldApplyBalance(ElectricGeneratorType generatorType);
-
-        void ConnectWithEngine(IEngineNoozle engine);
 	}
 }
 

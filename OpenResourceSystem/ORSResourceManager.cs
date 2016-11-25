@@ -21,10 +21,10 @@ namespace OpenResourceSystem
         protected PartModule my_partmodule;
         protected Dictionary<ORSResourceSuppliable, double> power_draws;
         protected Dictionary<ORSResourceSupplier, double> power_supplies;
-		//List<PartResource> partresources;
+		List<PartResource> partresources;
         protected String resource_name;
         //protected Dictionary<MegajouleSuppliable, float> power_returned;
-        protected double currentPowerSupply = 0;
+        protected double powersupply = 0;
 		protected double stable_supply = 0;
 		protected double stored_stable_supply = 0;
         protected double stored_resource_demand = 0;
@@ -81,7 +81,7 @@ namespace OpenResourceSystem
 
         public double powerSupply(ORSResourceSupplier pm, double power) 
         {
-            currentPowerSupply += (power / TimeWarp.fixedDeltaTime);
+            powersupply += (power / TimeWarp.fixedDeltaTime);
 			stable_supply += (power / TimeWarp.fixedDeltaTime);
 
             if (power_supplies.ContainsKey(pm)) 
@@ -99,7 +99,7 @@ namespace OpenResourceSystem
 
         public double powerSupplyFixedMax(ORSResourceSupplier pm, double power, double maxpower) 
         {
-			currentPowerSupply += (power / TimeWarp.fixedDeltaTime);
+			powersupply += (power / TimeWarp.fixedDeltaTime);
 			stable_supply += (maxpower / TimeWarp.fixedDeltaTime);
 
             if (power_supplies.ContainsKey(pm)) 
@@ -144,19 +144,19 @@ namespace OpenResourceSystem
 
         public double managedPowerSupplyWithMinimum(ORSResourceSupplier pm, double power, double rat_min) 
         {
-			var maximum_available_power_per_second = power / TimeWarp.fixedDeltaTime;
-            var minimum_power_per_second = maximum_available_power_per_second * rat_min;
-            var required_power_per_second = Math.Max(GetRequiredResourceDemand(), minimum_power_per_second);
-            var managed_supply_val_add = Math.Min(maximum_available_power_per_second, required_power_per_second);
+			double power_seconds_units = power / TimeWarp.fixedDeltaTime;
+			double power_min_seconds_units = power_seconds_units * rat_min;
+			double managed_supply_val_add = 
+                Math.Min (power_seconds_units, 
+                          Math.Max(getCurrentUnfilledResourceDemand() + getSpareResourceCapacity() / TimeWarp.fixedDeltaTime,
+                                   power_min_seconds_units));
+			powersupply += managed_supply_val_add;
+			stable_supply += power_seconds_units;
 
-			currentPowerSupply += managed_supply_val_add;
-			stable_supply += maximum_available_power_per_second;
-
-            if (power_supplies.ContainsKey(pm))
-                power_supplies[pm] += maximum_available_power_per_second;
-            else
-                power_supplies.Add(pm, maximum_available_power_per_second);
-
+            if (power_supplies.ContainsKey(pm)) 
+                power_supplies[pm] += (power / TimeWarp.fixedDeltaTime);
+            else 
+                power_supplies.Add(pm, (power / TimeWarp.fixedDeltaTime));
 			return managed_supply_val_add * TimeWarp.fixedDeltaTime;
 		}
 
@@ -194,34 +194,19 @@ namespace OpenResourceSystem
         {
             return (float)stored_current_hp_demand;
 		}
+        
 
 		public float getCurrentUnfilledResourceDemand() 
         {
-			return (float)(current_resource_demand - currentPowerSupply);
+			return (float) (current_resource_demand - powersupply);
 		}
-
-        public float GetRequiredResourceDemand()
-        {
-            return getCurrentUnfilledResourceDemand() + (float)getSpareResourceCapacity() / TimeWarp.fixedDeltaTime;
-        }
-
-        public float GetPowerSupply()
-        {
-            return (float)currentPowerSupply;
-        }
-
-        public float GetCurrentRresourceDemand()
-        {
-            return (float)current_resource_demand;
-        }
 
 		public double getResourceBarRatio() 
         {
 			return resource_bar_ratio;
 		}
 
-        public Vessel getVessel() 
-        {
+        public Vessel getVessel() {
             return my_vessel;
         }
 
@@ -239,7 +224,7 @@ namespace OpenResourceSystem
 
         public void update() 
         {
-            stored_supply = currentPowerSupply;
+            stored_supply = powersupply;
 			stored_stable_supply = stable_supply;
             stored_resource_demand = current_resource_demand;
 			double stored_current_demand = current_resource_demand;
@@ -270,20 +255,20 @@ namespace OpenResourceSystem
 				resource_bar_ratio = 0;
 
 			double missingmegajoules = maxmegajoules - currentmegajoules;
-            currentPowerSupply += currentmegajoules;
+            powersupply += currentmegajoules;
 			//Debug.Log ("Current:" + currentmegajoules);
 
 			double demand_supply_ratio = 0;
 			double high_priority_demand_supply_ratio = 0;
 
 			if (high_priority_resource_demand > 0) 
-				high_priority_demand_supply_ratio = Math.Min ((currentPowerSupply-stored_current_charge_demand) / stored_current_hp_demand, 1.0);
+				high_priority_demand_supply_ratio = Math.Min ((powersupply-stored_current_charge_demand) / stored_current_hp_demand, 1.0);
 			else 
 				high_priority_demand_supply_ratio = 1.0;
 			
 
 			if (stored_current_demand > 0) 
-				demand_supply_ratio = Math.Min ((currentPowerSupply-stored_current_charge_demand-stored_current_hp_demand) / stored_current_demand, 1.0);
+				demand_supply_ratio = Math.Min ((powersupply-stored_current_charge_demand-stored_current_hp_demand) / stored_current_demand, 1.0);
 			else 
 				demand_supply_ratio = 1.0;
 
@@ -295,13 +280,13 @@ namespace OpenResourceSystem
 				foreach (PartResource partresource in electric_charge_resources) {
 					stock_electric_charge_needed += partresource.maxAmount - partresource.amount;
 				}
-				double power_supplied = Math.Min(currentPowerSupply*1000*TimeWarp.fixedDeltaTime, stock_electric_charge_needed);
+				double power_supplied = Math.Min(powersupply*1000*TimeWarp.fixedDeltaTime, stock_electric_charge_needed);
                 if (stock_electric_charge_needed > 0) {
                     current_resource_demand += stock_electric_charge_needed / 1000.0 / TimeWarp.fixedDeltaTime;
                     charge_resource_demand += stock_electric_charge_needed / 1000.0 / TimeWarp.fixedDeltaTime;
                 }
 				if (power_supplied > 0) {
-                    currentPowerSupply += my_part.RequestResource("ElectricCharge", -power_supplied) / 1000 / TimeWarp.fixedDeltaTime;
+                    powersupply += my_part.RequestResource("ElectricCharge", -power_supplied) / 1000 / TimeWarp.fixedDeltaTime;
 				}
 			}
 
@@ -327,9 +312,9 @@ namespace OpenResourceSystem
 					if (flow_type == FNRESOURCE_FLOWTYPE_EVEN) 
 						power = power * high_priority_demand_supply_ratio;
 					
-                    double power_supplied = Math.Max(Math.Min(currentPowerSupply, power),0.0);
+                    double power_supplied = Math.Max(Math.Min(powersupply, power),0.0);
 					//Debug.Log (power + ", " + powersupply + "::: " + power_supplied);
-                    currentPowerSupply -= power_supplied;
+                    powersupply -= power_supplied;
 					//notify of supply
                     ms.receiveFNResource(power_supplied, this.resource_name);
                 }
@@ -348,8 +333,8 @@ namespace OpenResourceSystem
 					if (flow_type == FNRESOURCE_FLOWTYPE_EVEN) 
 						power = power * demand_supply_ratio;
 					
-					double power_supplied = Math.Max(Math.Min(currentPowerSupply, power),0.0);
-                    currentPowerSupply -= power_supplied;
+					double power_supplied = Math.Max(Math.Min(powersupply, power),0.0);
+                    powersupply -= power_supplied;
 
 					//notify of supply
 					ms.receiveFNResource(power_supplied, this.resource_name);
@@ -367,8 +352,8 @@ namespace OpenResourceSystem
 					if (flow_type == FNRESOURCE_FLOWTYPE_EVEN) 
 						power = power * demand_supply_ratio;
 
-					double power_supplied = Math.Max(Math.Min(currentPowerSupply, power), 0.0);
-					currentPowerSupply -= power_supplied;
+					double power_supplied = Math.Max(Math.Min(powersupply, power), 0.0);
+					powersupply -= power_supplied;
 
 					//notify of supply
                     ms.receiveFNResource(power_supplied, this.resource_name);
@@ -376,9 +361,9 @@ namespace OpenResourceSystem
 			}
 
 
-            currentPowerSupply -= Math.Max(currentmegajoules, 0.0);
+            powersupply -= Math.Max(currentmegajoules, 0.0);
 
-			internl_power_extract = -currentPowerSupply * TimeWarp.fixedDeltaTime;
+			internl_power_extract = -powersupply * TimeWarp.fixedDeltaTime;
 
             pluginSpecificImpl();
 
@@ -389,7 +374,7 @@ namespace OpenResourceSystem
 
             //my_part.RequestResource(this.resource_name, internl_power_extract);
             ORSHelper.fixedRequestResource(my_part, this.resource_name, internl_power_extract);
-            currentPowerSupply = 0;
+            powersupply = 0;
 			stable_supply = 0;
             power_supplies.Clear();
             power_draws.Clear();

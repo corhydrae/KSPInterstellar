@@ -13,7 +13,6 @@ namespace FNPlugin
         protected double _density;
         protected string _unit;
         protected bool _consumeGlobal;
-        
 
         public ReactorFuel(ConfigNode node) 
         {
@@ -22,7 +21,6 @@ namespace FNPlugin
             _unit = node.GetValue("Unit");
             _density = PartResourceLibrary.Instance.GetDefinition(_fuel_name).density;
             _consumeGlobal = node.HasValue("consumeGlobal") ? Boolean.Parse(node.GetValue("consumeGlobal")) : true;
-            
         }
 
         public bool ConsumeGlobal { get { return _consumeGlobal; } }

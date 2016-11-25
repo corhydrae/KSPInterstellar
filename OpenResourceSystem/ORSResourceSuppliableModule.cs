@@ -176,24 +176,6 @@ namespace OpenResourceSystem
             return manager.getCurrentUnfilledResourceDemand();
         }
 
-        public float GetPowerSupply(String resourcename)
-        {
-            if (!getOvermanagerForResource(resourcename).hasManagerForVessel(vessel))
-                return 0;
-
-            ORSResourceManager manager = getOvermanagerForResource(resourcename).getManagerForVessel(vessel);
-            return manager.GetPowerSupply();
-        }
-
-        public float GetCurrentResourceDemand(String resourcename)
-        {
-            if (!getOvermanagerForResource(resourcename).hasManagerForVessel(vessel))
-                return 0;
-
-            ORSResourceManager manager = getOvermanagerForResource(resourcename).getManagerForVessel(vessel);
-            return manager.GetCurrentRresourceDemand();
-        }
-
         public double getResourceBarRatio(String resourcename)
         {
             if (!getOvermanagerForResource(resourcename).hasManagerForVessel(vessel)) return 0;
