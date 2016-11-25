@@ -10,7 +10,6 @@ namespace FNPlugin
         public double mass;
     }
 
-
     class ReactorFuelMode 
 	{
         protected int _reactor_type;
@@ -18,30 +17,36 @@ namespace FNPlugin
         protected string _techRequirement;
         protected List<ReactorFuel> _fuels;
         protected List<ReactorProduct> _products;
-        protected double _normreactionrate;
-        protected double _normpowerrequirements;
+        protected float _reactionRate;
+        protected float _powerMultiplier;
+        protected float _normpowerrequirements;
         protected float _charged_power_ratio;
         protected double _mev_per_charged_product;
-        protected double _neutrons_ratio;
+        protected float _neutrons_ratio;
         protected double _fuel_efficency_multiplier;
         protected bool _requires_lab;
         protected bool _requires_upgrade;
+        protected int _techLevel;
 
         public ReactorFuelMode(ConfigNode node) 
         {
             _reactor_type = Convert.ToInt32(node.GetValue("ReactorType"));
             _mode_gui_name = node.GetValue("GUIName");
+
             _techRequirement = node.HasValue("TechRequirement") ? node.GetValue("TechRequirement") : String.Empty;
 
-            _normreactionrate = Double.Parse(node.GetValue("NormalisedReactionRate"));
-            _normpowerrequirements = Double.Parse(node.GetValue("NormalisedPowerConsumption"));
-            _charged_power_ratio = Single.Parse(node.GetValue("ChargedParticleRatio"));
+            _reactionRate = node.HasValue("NormalisedReactionRate") ? Single.Parse(node.GetValue("NormalisedReactionRate")) : 1;
+            _powerMultiplier = node.HasValue("NormalisedPowerMultiplier") ? Single.Parse(node.GetValue("NormalisedPowerMultiplier")) : 1;
+            _normpowerrequirements = node.HasValue("NormalisedPowerConsumption") ? Single.Parse(node.GetValue("NormalisedPowerConsumption")) : 1;
+            _charged_power_ratio = node.HasValue("ChargedParticleRatio") ? Single.Parse(node.GetValue("ChargedParticleRatio")) : 0;
 
             _mev_per_charged_product = node.HasValue("MeVPerChargedProduct") ? Double.Parse(node.GetValue("MeVPerChargedProduct")) : 0;
-            _neutrons_ratio = node.HasValue("NeutronsRatio") ? Double.Parse(node.GetValue("NeutronsRatio")) : 1;
+            _neutrons_ratio = node.HasValue("NeutronsRatio") ? Single.Parse(node.GetValue("NeutronsRatio")) : 1;
             _fuel_efficency_multiplier = node.HasValue("FuelEfficiencyMultiplier") ? Double.Parse(node.GetValue("FuelEfficiencyMultiplier")) : 1;
+
             _requires_lab = node.HasValue("RequiresLab") ? Boolean.Parse(node.GetValue("RequiresLab")) : false;
             _requires_upgrade = node.HasValue("RequiresUpgrade") ? Boolean.Parse(node.GetValue("RequiresUpgrade")) : false;
+            _techLevel = node.HasValue("TechLevel") ? Int32.Parse(node.GetValue("TechLevel")) : 0;
 
             ConfigNode[] fuel_nodes = node.GetNodes("FUEL");
             _fuels = fuel_nodes.Select(nd => new ReactorFuel(nd)).ToList();
@@ -70,11 +75,13 @@ namespace FNPlugin
 
         public double MeVPerChargedProduct { get { return _mev_per_charged_product; } }
 
-        public double NormalisedReactionRate { get { return _normreactionrate; } }
+        public float NormalisedReactionRate { get { return _reactionRate * _powerMultiplier; } }
 
-        public double NormalisedPowerRequirements { get { return _normpowerrequirements; } }
+        public float NormalisedPowerRequirements { get { return _normpowerrequirements; } }
 
-        public double NeutronsRatio { get { return _neutrons_ratio; } }
+        public int TechLevel { get { return _techLevel; } }
+
+        public float NeutronsRatio { get { return _neutrons_ratio; } }
 
         public double FuelEfficencyMultiplier { get { return _fuel_efficency_multiplier; } }
     }

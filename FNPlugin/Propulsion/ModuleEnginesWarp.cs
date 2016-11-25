@@ -5,8 +5,6 @@ using FNPlugin.Extensions;
 
 namespace FNPlugin
 {
-    //public class ModuleEnginesWarp: WarpModuleEnginesFX  {}
-
     public class ModuleEnginesWarp : ModuleEnginesFX
     {
         // GUI display values
@@ -23,13 +21,13 @@ namespace FNPlugin
         [KSPField(guiActive = true, guiName = "Warp Throttle")]
         protected string Throttle = "";
 
-        [KSPField(guiActive = true, guiName = "Demand")]
+        [KSPField(guiActive = false, guiName = "Demand")]
         public double propellantUsed;
 
         //[KSPField(guiActive = false, guiName = "Calc Flow")]
         //public double calcualtedFlow;
 
-        [KSPField(guiActive = true, guiName = "Mass Flow")]
+        [KSPField(guiActive = false, guiName = "Mass Flow")]
         public double requestedFlow;
 
         // Numeric display values
@@ -135,13 +133,15 @@ namespace FNPlugin
                 {
                     double vesselMass = this.vessel.GetTotalMass(); // Current mass
                     double m1 = vesselMass - dm; // Mass at end of burn
-                    double deltaV = IspPersistent * 9.81 * Math.Log(vesselMass / m1); // Delta V from burn
+                    double deltaV = IspPersistent * PluginHelper.GravityConstant * Math.Log(vesselMass / m1); // Delta V from burn
 
                     Vector3d thrustV = this.part.transform.up; // Thrust direction
                     Vector3d deltaVV = deltaV * thrustV; // DeltaV vector
                     vessel.orbit.Perturb(deltaVV, UT, TimeWarp.fixedDeltaTime); // Update vessel orbit
+                    //this.rigidbody.AddRelativeForce(deltaVV, ForceMode.Impulse);
                 }
                 // Otherwise, if throttle is turned on, and demand out is 0, show warning
+                    
                 else if (ThrottlePersistent > 0)
                 {
                     Debug.Log("Propellant depleted");

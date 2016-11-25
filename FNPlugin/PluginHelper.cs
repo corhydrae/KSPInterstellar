@@ -146,20 +146,20 @@ namespace FNPlugin
 		private static float _gravityConstant = GameConstants.STANDARD_GRAVITY; 
         public static float GravityConstant { get { return _gravityConstant; } }
 
-		private static double _ispCoreTempMult = GameConstants.IspCoreTemperatureMultiplier;
-        public static double IspCoreTempMult { get { return _ispCoreTempMult; } }
+		private static float _ispCoreTempMult = GameConstants.IspCoreTemperatureMultiplier;
+        public static float IspCoreTempMult { get { return _ispCoreTempMult; } }
 
-		private static double _lowCoreTempBaseThrust = 0;
-        public static double LowCoreTempBaseThrust { get { return _lowCoreTempBaseThrust; } }
+		private static float _lowCoreTempBaseThrust = 0;
+        public static float LowCoreTempBaseThrust { get { return _lowCoreTempBaseThrust; } }
 
-		private static double _highCoreTempThrustMult = GameConstants.HighCoreTempThrustMultiplier;
-        public static double HighCoreTempThrustMult { get { return _highCoreTempThrustMult; } }
+		private static float _highCoreTempThrustMult = GameConstants.HighCoreTempThrustMultiplier;
+        public static float HighCoreTempThrustMult { get { return _highCoreTempThrustMult; } }
 
-		private static double _thrustCoreTempThreshold = 0;
-        public static double ThrustCoreTempThreshold { get { return _thrustCoreTempThreshold; } }
+        private static float _thrustCoreTempThreshold = 0;
+        public static float ThrustCoreTempThreshold { get { return _thrustCoreTempThreshold; } }
 
-		private static double _globalThermalNozzlePowerMaxThrustMult = 1;
-        public static double GlobalThermalNozzlePowerMaxThrustMult { get { return _globalThermalNozzlePowerMaxThrustMult; } }
+		private static float _globalThermalNozzlePowerMaxThrustMult = 1;
+        public static float GlobalThermalNozzlePowerMaxThrustMult { get { return _globalThermalNozzlePowerMaxThrustMult; } }
 
 		private static double _globalMagneticNozzlePowerMaxThrustMult = 1;
         public static double GlobalMagneticNozzlePowerMaxThrustMult { get { return _globalMagneticNozzlePowerMaxThrustMult; } }
@@ -239,8 +239,6 @@ namespace FNPlugin
 		private static float _maxThermalNozzleIsp = GameConstants.MaxThermalNozzleIsp;
         public static float MaxThermalNozzleIsp { get { return _maxThermalNozzleIsp; } }
 
-
-
 		private static bool _isPanelHeatingClamped = false;
         public static bool IsSolarPanelHeatingClamped { get { return _isPanelHeatingClamped; }}
 
@@ -278,8 +276,16 @@ namespace FNPlugin
             return techName == String.Empty || PluginHelper.upgradeAvailable(techName);
         }
 
+        public static bool HasTechRequirementAndNotEmpty(string techName)
+        {
+            return techName != String.Empty && PluginHelper.upgradeAvailable(techName);
+        }
+
         public static bool hasTech(string techid)
         {
+            if (String.IsNullOrEmpty(techid))
+                return false;
+
             if (ResearchAndDevelopment.Instance == null)
                 return HasTechFromSaveFile(techid);
 
@@ -304,12 +310,14 @@ namespace FNPlugin
 
         public static void LoadSaveFile()
         {
-            string persistentfile = KSPUtil.ApplicationRootPath + "saves/" + HighLogic.SaveFolder + "/persistent.sfs";
-            UnityEngine.Debug.Log("[KSPI] - Loading ConfigNode " + persistentfile);
-            ConfigNode config = ConfigNode.Load(persistentfile);
             researchedTechs = new HashSet<string>();
+
+            string persistentfile = KSPUtil.ApplicationRootPath + "saves/" + HighLogic.SaveFolder + "/persistent.sfs";
+            //UnityEngine.Debug.Log("[KSPI] - Loading ConfigNode " + persistentfile);
+            ConfigNode config = ConfigNode.Load(persistentfile);
             ConfigNode gameconf = config.GetNode("GAME");
             ConfigNode[] scenarios = gameconf.GetNodes("SCENARIO");
+            
             foreach (ConfigNode scenario in scenarios)
             {
                 if (scenario.GetValue("name") == "ResearchAndDevelopment")
@@ -345,13 +353,13 @@ namespace FNPlugin
 
         public static bool upgradeAvailable(string techid)
         {
+            if (String.IsNullOrEmpty(techid))
+                return false;
+
             if (HighLogic.CurrentGame != null)
             {
                 if (PluginHelper.TechnologyIsInUse)
-                {
-                    if (techid != null && PluginHelper.hasTech(techid))
-                        return true;
-                }
+                    return PluginHelper.hasTech(techid);
                 else
                     return true;
             }
@@ -614,7 +622,7 @@ namespace FNPlugin
                     }
                     if (plugin_settings.HasValue("IspCoreTempMult"))
                     {
-                        PluginHelper._ispCoreTempMult = double.Parse(plugin_settings.GetValue("IspCoreTempMult"));
+                        PluginHelper._ispCoreTempMult = float.Parse(plugin_settings.GetValue("IspCoreTempMult"));
                         Debug.Log("[KSP Interstellar] Isp core temperature multiplier set to: " + PluginHelper.IspCoreTempMult.ToString("0.000000"));
                     }
                     if (plugin_settings.HasValue("ElectricEngineIspMult"))
@@ -627,7 +635,7 @@ namespace FNPlugin
 
                     if (plugin_settings.HasValue("GlobalThermalNozzlePowerMaxTrustMult"))
                     {
-                        PluginHelper._globalThermalNozzlePowerMaxThrustMult = double.Parse(plugin_settings.GetValue("GlobalThermalNozzlePowerMaxTrustMult"));
+                        PluginHelper._globalThermalNozzlePowerMaxThrustMult = float.Parse(plugin_settings.GetValue("GlobalThermalNozzlePowerMaxTrustMult"));
                         Debug.Log("[KSP Interstellar] Maximum Global Thermal Power Maximum Thrust Multiplier set to: " + PluginHelper.GlobalThermalNozzlePowerMaxThrustMult.ToString("0.0"));
                     }
                     if (plugin_settings.HasValue("GlobalMagneticNozzlePowerMaxTrustMult"))
@@ -653,17 +661,17 @@ namespace FNPlugin
 
                     if (plugin_settings.HasValue("TrustCoreTempThreshold"))
                     {
-                        PluginHelper._thrustCoreTempThreshold = double.Parse(plugin_settings.GetValue("TrustCoreTempThreshold"));
+                        PluginHelper._thrustCoreTempThreshold = float.Parse(plugin_settings.GetValue("TrustCoreTempThreshold"));
                         Debug.Log("[KSP Interstellar] Thrust core temperature threshold set to: " + PluginHelper.ThrustCoreTempThreshold.ToString("0.0"));
                     }
                     if (plugin_settings.HasValue("LowCoreTempBaseTrust"))
                     {
-                        PluginHelper._lowCoreTempBaseThrust = double.Parse(plugin_settings.GetValue("LowCoreTempBaseTrust"));
+                        PluginHelper._lowCoreTempBaseThrust = float.Parse(plugin_settings.GetValue("LowCoreTempBaseTrust"));
                         Debug.Log("[KSP Interstellar] Low core temperature base thrust modifier set to: " + PluginHelper.LowCoreTempBaseThrust.ToString("0.0"));
                     }
                     if (plugin_settings.HasValue("HighCoreTempTrustMult"))
                     {
-                        PluginHelper._highCoreTempThrustMult = double.Parse(plugin_settings.GetValue("HighCoreTempTrustMult"));
+                        PluginHelper._highCoreTempThrustMult = float.Parse(plugin_settings.GetValue("HighCoreTempTrustMult"));
                         Debug.Log("[KSP Interstellar] High core temperature thrust divider set to: " + PluginHelper.HighCoreTempThrustMult.ToString("0.0"));
                     }
                     if (plugin_settings.HasValue("BasePowerConsumption"))

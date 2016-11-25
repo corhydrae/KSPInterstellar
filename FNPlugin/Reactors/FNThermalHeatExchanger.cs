@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using UnityEngine;
+using FNPlugin.Propulsion;
 
 namespace FNPlugin  
 {
@@ -17,6 +18,8 @@ namespace FNPlugin
         public float radius;
         [KSPField(isPersistant = false)]
         public float heatTransportationEfficiency = 0.7f;
+        [KSPField(isPersistant = false)]
+        public float maximumPowerRecieved = 6;
 
         //GUI
 		[KSPField(isPersistant = false, guiActive = true, guiName = "Thermal Power")]
@@ -31,16 +34,26 @@ namespace FNPlugin
         protected Dictionary<Guid, float> connectedRecieversFraction = new Dictionary<Guid, float>();
         protected float connectedRecieversSum;
 
-        protected double storedIsThermalEnergyGenratorActive;
-        protected double currentIsThermalEnergyGenratorActive;
+        protected double storedIsThermalEnergyGeneratorActive;
+        protected double currentIsThermalEnergyGeneratorActive;
 
-        public double EfficencyConnectedThermalEnergyGenrator { get { return storedIsThermalEnergyGenratorActive; } }
+        public Part Part { get { return this.part; } }
+
+        public int SupportedPropellantAtoms { get { return GameConstants.defaultSupportedPropellantAtoms; } }
+
+        public int SupportedPropellantTypes { get { return GameConstants.defaultSupportedPropellantTypes; } }
+
+        public bool FullPowerForNonNeutronAbsorbants { get { return true; } }
+
+        public float ThermalProcessingModifier { get { return 1; } }
+
+        public double EfficencyConnectedThermalEnergyGenrator { get { return storedIsThermalEnergyGeneratorActive; } }
 
         public double EfficencyConnectedChargedEnergyGenrator { get { return 0; } }
 
         public void NotifyActiveThermalEnergyGenrator(double efficency, ElectricGeneratorType generatorType)
         {
-            currentIsThermalEnergyGenratorActive = efficency;
+            currentIsThermalEnergyGeneratorActive = efficency;
         }
 
         public void NotifyActiveChargedEnergyGenrator(double efficency, ElectricGeneratorType generatorType) { }
@@ -50,6 +63,8 @@ namespace FNPlugin
         public bool ShouldApplyBalance (ElectricGeneratorType generatorType) {  return false;  }
 
         public double ChargedPowerRatio { get { return 0; } }
+
+        public float RawMaximumPower { get { return maximumPowerRecieved; } }
 
         public void AttachThermalReciever(Guid key, float radius)
         {
@@ -88,6 +103,8 @@ namespace FNPlugin
             else
                 return 0;
         }
+
+        public void ConnectWithEngine(IEngineNoozle engine) { }
 
         public double ProducedWasteHeat { get { return 0; } }
 
@@ -182,8 +199,8 @@ namespace FNPlugin
 
 		public override void OnFixedUpdate() 
         {
-            storedIsThermalEnergyGenratorActive = currentIsThermalEnergyGenratorActive;
-            currentIsThermalEnergyGenratorActive = 0;
+            storedIsThermalEnergyGeneratorActive = currentIsThermalEnergyGeneratorActive;
+            currentIsThermalEnergyGeneratorActive = 0;
             
             base.OnFixedUpdate ();
 			setupThermalPower ();
